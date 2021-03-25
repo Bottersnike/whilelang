@@ -3,7 +3,7 @@ from .const import DIRECTIVE, NUMBER, SYMBOL, NAME, KEYWORD, BOOLEAN, EOF, ANY
 from .nodes import (
     SuiteNode, SkipNode, IfNode, WhileNode, AssignNode, VariableNode, NotNode,
     ConstantNode, MulNode, SubNode, AddNode, CmpNode, EqNode, AndNode, OrNode,
-    TraceNode
+    TraceNode, ExitNode, PrintNode
 )
 
 
@@ -50,6 +50,10 @@ class Parser(BaseParser):
         elif token.type == DIRECTIVE:
             if token.meta == "trace":
                 return TraceNode(token.location)
+            elif token.meta == "exit":
+                return ExitNode()
+            elif token.meta == "print":
+                return PrintNode(self.eat(NAME).meta)
             else:
                 self._error(f"Unknown directive '{token.meta}'")
         elif token.type == NAME:

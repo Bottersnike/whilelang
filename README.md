@@ -15,6 +15,8 @@ that can be found online, largely for ease of implementation.
             | "while" <expr_a> "do" <suite>
             | "if" <expr_a> "then" <suite> ["else" <suite>]
             | NAME ":=" <expr_a>
+            | <directive>
+<directive> = "@" ("trace" | "exit" | "print" NAME)
 <factor> = [("!" | "¬")] (NAME | NUMBER | BOOLEAN | "(" <expr_a> ")")
 <expr_f> = <factor> [("*" | "/") <factor>]
 <expr_e> = <expr_f> [("+" | "-") <expr_f>]
@@ -27,3 +29,7 @@ that can be found online, largely for ease of implementation.
 This logic can be seen implemented as code in `parser.py`. Compared to the
 simpler grammars often quoted, this grammar provides proper operator
 precedence.
+
+The `@exit` directive can be used to kill a program immediately without a final
+output. The current implementation means this will also kill any parent process
+that uses `whilelang.run`.

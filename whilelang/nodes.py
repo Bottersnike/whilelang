@@ -145,3 +145,16 @@ class TraceNode(ASTNode):
 
         for i in namespace:
             print(f"  {i} := {namespace[i]}")
+
+
+class ExitNode(ASTNode):
+    def visit(self, *args):
+        exit()
+
+
+class PrintNode(ASTNode):
+    def __init__(self, name):
+        self.name = name
+
+    def visit(self, namespace, *args):
+        print(f"{self.name} := {namespace.get(self.name, 0)}")
