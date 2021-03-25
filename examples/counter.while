@@ -1,0 +1,6 @@
+x := 1;
+// _arg0 is from the command line
+while (_arg0 > 0) do (
+    x := x + 1;
+    _arg0 := _arg0 - 1
+)
