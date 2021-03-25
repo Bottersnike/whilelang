@@ -1,13 +1,26 @@
 import time
 import sys
 
-from whilelang import Lexer
-from whilelang import Parser
+from .lexer import Lexer
+from .parser import Parser
+
+
+def run(code, initial=None):
+    namespace = initial
+    if namespace is None:
+        namespace = {}
+
+    parser = Parser(Lexer(code))
+
+    start = time.time_ns()
+    parser.suite().visit(namespace)
+    return time.time_ns() - start
 
 
 def main():
     if len(sys.argv) < 2:
         print("Usage: while filename [...args]")
+        return
     filename = sys.argv[1]
     namespace = {}
     for n, i in enumerate(sys.argv[2:]):
@@ -24,17 +37,10 @@ def main():
         namespace[f"_arg{n}"] = i
     with open(filename) as code_file:
         code = code_file.read()
-    parser = Parser(Lexer(code))
 
-    start = time.time_ns()
-    parser.suite().visit(namespace)
-    duration_ns = time.time_ns() - start
+    duration_ns = run(code, namespace)
     print(f"Completed in {duration_ns / 1000000}ms")
     for i in namespace:
         if i.startswith("_"):
             continue
         print(f"{i} := {namespace[i]}")
-
-
-if __name__ == "__main__":
-    main()
