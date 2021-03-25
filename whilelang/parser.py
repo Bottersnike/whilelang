@@ -1,8 +1,9 @@
 from .base_parser import BaseParser
-from .const import NUMBER, SYMBOL, NAME, KEYWORD, BOOLEAN, EOF, ANY
+from .const import DIRECTIVE, NUMBER, SYMBOL, NAME, KEYWORD, BOOLEAN, EOF, ANY
 from .nodes import (
     SuiteNode, SkipNode, IfNode, WhileNode, AssignNode, VariableNode, NotNode,
-    ConstantNode, MulNode, SubNode, AddNode, CmpNode, EqNode, AndNode, OrNode
+    ConstantNode, MulNode, SubNode, AddNode, CmpNode, EqNode, AndNode, OrNode,
+    TraceNode
 )
 
 
@@ -24,8 +25,9 @@ class Parser(BaseParser):
 
     def statement(self):
         token = self.eat_list({
-            KEYWORD: ("skip", "if", "while"),
+            KEYWORD: ("skip", "if", "while", "trace"),
             NAME: ANY,
+            DIRECTIVE: ANY,
         })
 
         if token.type == KEYWORD:
@@ -45,6 +47,11 @@ class Parser(BaseParser):
                 self.eat(KEYWORD, "do")
                 while_body = self.suite()
                 return WhileNode(while_condition, while_body)
+        elif token.type == DIRECTIVE:
+            if token.meta == "trace":
+                return TraceNode(token.location)
+            else:
+                self._error(f"Unknown directive '{token.meta}'")
         elif token.type == NAME:
             name = token.meta
             self.eat(SYMBOL, ":=")

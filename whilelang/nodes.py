@@ -24,7 +24,7 @@ class IfNode(ASTNode):
     def visit(self, *args):
         if self.condition.visit(*args):
             self.body.visit(*args)
-        else:
+        elif self.else_body is not None:
             self.else_body.visit(*args)
 
 
@@ -134,3 +134,14 @@ class VariableNode(ASTNode):
 
     def visit(self, namespace, *args):
         return namespace.get(self.name, 0)
+
+
+class TraceNode(ASTNode):
+    def __init__(self, location):
+        self.location = location
+
+    def visit(self, namespace, *args):
+        print(f"-=-=-=- Trace on line {self.location[0] + 1} -=-=-=-")
+
+        for i in namespace:
+            print(f"  {i} := {namespace[i]}")

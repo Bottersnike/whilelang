@@ -1,7 +1,7 @@
 import string
 
 from .token import Token
-from .const import NUMBER, SYMBOL, NAME, KEYWORD, BOOLEAN, EOF
+from .const import DIRECTIVE, NUMBER, SYMBOL, NAME, KEYWORD, BOOLEAN, EOF
 
 
 class Lexer:
@@ -14,6 +14,7 @@ class Lexer:
     NAME_BODY = NAME_START + DIGITS
 
     KEYWORDS = ("skip", "if", "then", "else", "while", "do")
+    DIRECTIVE_START = "@"
     BOOLEANS = ("true", "false")
     DOUBLE_SYMBOLS = ("<=", ">=", ":=")
     SYMBOLS = (">", "<", "=", "+", "-", "*", "|", "&", "¬", "!", "(", ")", ";")
@@ -76,6 +77,13 @@ class Lexer:
 
         return Token(NUMBER, int(num), self._position, len(num))
 
+    def _consume_directive(self):
+        name = ""
+        while self._cur_char is not None and self._cur_char in self.NAME_BODY:
+            name += self._cur_char
+            self._advance()
+        return Token(DIRECTIVE, name, self._position, len(name))
+
     def _skip_line(self):
         while self._cur_char and self._cur_char != "\n":
             self._advance()
@@ -89,6 +97,10 @@ class Lexer:
             if self._cur_char == "/" and self._peek() == "/":
                 self._skip_line()
                 continue
+
+            if self._cur_char == self.DIRECTIVE_START:
+                self._advance()
+                return self._consume_directive()
 
             if self._cur_char in self.NAME_START:
                 return self._consume_name()
@@ -108,7 +120,7 @@ class Lexer:
                 return self._consume_number()
 
             self._error(f"Unexpected character '{self._cur_char}'")
-        return Token(EOF, self._position, 0)
+        return Token(EOF, None, self._position, 0)
 
     def __iter__(self):
         token: Token

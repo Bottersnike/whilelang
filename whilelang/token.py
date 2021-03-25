@@ -1,5 +1,5 @@
 class Token:
-    def __init__(self, type_, meta=None, location=None, length=0):
+    def __init__(self, type_, meta, location, length):
         self._type = type_
         self._meta = meta
         self._location = location
