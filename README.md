@@ -3,7 +3,7 @@
 The recommended way to install While is via pip, using `pip install whilelang`.
 
 ```
-usage: while.py [-h] [-c] [-n] [source] [arguments ...]
+usage: while [-h] [-c] [-n] [source] [arguments ...]
 
 positional arguments:
   source         Source code, or path to source file
@@ -46,12 +46,12 @@ that can be found online, largely for ease of implementation.
             | "from_numeric" NAME <statement>
             | "run_numeric" NAME <statement>
             | "eval" NAME
-<expr_f> = <factor> [("*" | "/") <expr_f>]
-<expr_e> = <expr_f> [("+" | "-") <expr_e>]
-<expr_d> = <expr_e> [("<=" | "<" | ">=" | ">") <expr_d>]
-<expr_c> = <expr_d> ["=" <expr_c>]
-<expr_b> = <expr_c> ["&" <expr_b>]
-<expr_a> = <expr_b> ["|" <expr_a>]
+<expr_f> = <factor> *(("*" | "/") <factor>)
+<expr_e> = <expr_f> *(("+" | "-") <expr_f>)
+<expr_d> = <expr_e> *(("<=" | "<" | ">=" | ">") <expr_e>)
+<expr_c> = <expr_d> *("=" <expr_d>)
+<expr_b> = <expr_c> *("&" <expr_c>)
+<expr_a> = <expr_b> *("|" <expr_b>)
 ```
 
 This logic can be seen implemented as code in `parser.py`. Compared to the
@@ -61,7 +61,7 @@ precedence.
 ## Notes on Göbel number calculation
 
 Canonical While lacks certain features implemented in this interpreter.
-Notable, the numeric comparisons are restricted to only `<=`, and boolean
+Notably, the numeric comparisons are restricted to only `<=`, and boolean
 comparisons to only `&`. Where possible, `@numeric` will attempt to convert
 code into functionally equivalent code. This means `@from_numeric` may noy
 always return the exact same code.

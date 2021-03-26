@@ -113,45 +113,50 @@ class Parser(BaseParser):
         return token
 
     def expr_f(self):
-        lhs = self.factor()
-        if self.try_eat(SYMBOL, "*"):
-            return MulNode(lhs, self.expr_f())
-        if self.try_eat(SYMBOL, "/"):
-            return SubNode(lhs, self.expr_f())
-        return lhs
+        node = self.factor()
+        while self._cur.type == SYMBOL and self._cur.meta in ("*", "/"):
+            if self.try_eat(SYMBOL, "*"):
+                node = MulNode(node, self.factor())
+            if self.try_eat(SYMBOL, "/"):
+                node = SubNode(node, self.factor())
+        return node
 
     def expr_e(self):
-        lhs = self.expr_f()
-        if self.try_eat(SYMBOL, "+"):
-            return AddNode(lhs, self.expr_e())
-        if self.try_eat(SYMBOL, "-"):
-            return SubNode(lhs, self.expr_e())
-        return lhs
+        node = self.expr_f()
+        while self._cur.type == SYMBOL and self._cur.meta in ("+", "-"):
+            if self.try_eat(SYMBOL, "+"):
+                node = AddNode(node, self.expr_f())
+            if self.try_eat(SYMBOL, "-"):
+                node = SubNode(node, self.expr_f())
+        return node
 
     def expr_d(self):
-        lhs = self.expr_e()
-        if (
+        node = self.expr_e()
+        while (
             self._cur.type == SYMBOL
             and self._cur.meta in ("<=", "<", ">", ">=")
         ):
             sym = self.eat(SYMBOL)
-            return CmpNode(lhs, sym.meta, self.expr_d())
-        return lhs
+            node = CmpNode(node, sym.meta, self.expr_e())
+        return node
 
     def expr_c(self):
-        lhs = self.expr_d()
-        if self.try_eat(SYMBOL, "="):
-            return EqNode(lhs, self.expr_c())
-        return lhs
+        node = self.expr_d()
+        while self._cur.type == SYMBOL and self._cur.meta in ("=", ):
+            if self.try_eat(SYMBOL, "="):
+                node = EqNode(node, self.expr_d())
+        return node
 
     def expr_b(self):
-        lhs = self.expr_c()
-        if self.try_eat(SYMBOL, "&"):
-            return AndNode(lhs, self.expr_b())
-        return lhs
+        node = self.expr_c()
+        while self._cur.type == SYMBOL and self._cur.meta in ("&", ):
+            if self.try_eat(SYMBOL, "&"):
+                node = AndNode(node, self.expr_c())
+        return node
 
     def expr_a(self):
-        lhs = self.expr_b()
-        if self.try_eat(SYMBOL, "|"):
-            return OrNode(lhs, self.expr_a())
-        return lhs
+        node = self.expr_b()
+        while self._cur.type == SYMBOL and self._cur.meta in ("|", ):
+            if self.try_eat(SYMBOL, "|"):
+                node = OrNode(node, self.expr_b())
+        return node

@@ -60,7 +60,7 @@ def repl(args):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog="while")
     parser.add_argument(
         "source", default=None, nargs="?",
         help="Source code, or path to source file",
