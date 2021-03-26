@@ -1,10 +1,11 @@
+import traceback
 import argparse
 import time
 import sys
 
 from .lexer import Lexer
 from .parser import Parser
-from .errors import WhileSyntaxError, WhileSystemExit, WhileError
+from .errors import WhileSystemExit, WhileError
 
 
 def run(code, initial=None):
@@ -16,12 +17,12 @@ def run(code, initial=None):
         parser = Parser(Lexer(code))
 
         start = time.time_ns()
-        parser.suite().visit(namespace)
-    except WhileSyntaxError as e:
-        print(e)
-        return -1
+        parser.program().visit(namespace)
     except WhileSystemExit:
         pass
+    except WhileError as e:
+        print(e)
+        return -1
     return time.time_ns() - start
 
 
@@ -30,22 +31,32 @@ def repl(args):
         "While interpreter running on Python "
         f"{sys.version_info.major}.{sys.version_info.minor}"
     )
-    print("Type @help for basic help, and @reset to reset the repl")
+    print("Type @help for basic help, @reset to reset the repl, "
+          "and @exit to exit")
     namespace = {}
     while True:
-        code = input(">>> ")
         try:
-            ast = Parser(Lexer(code)).suite()
+            code = input(">>> ")
+        except KeyboardInterrupt:
+            print()
+            continue
+        if not code.strip():
+            continue
+
+        try:
+            ast = Parser(Lexer(code)).program()
 
             if args.numeric:
                 print(ast.numeric())
             else:
                 if (ret := ast.visit(namespace)) is not None:
                     print(ret)
-        except WhileSyntaxError as e:
-            print(e)
         except WhileSystemExit:
             break
+        except WhileError as e:
+            print(e)
+        except:  # noqa: E722
+            traceback.print_exc()
 
 
 def main():

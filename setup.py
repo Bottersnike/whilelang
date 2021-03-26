@@ -7,7 +7,7 @@ with open("README.md", encoding="utf-8") as file_:
 
 setuptools.setup(
     name="whilelang",
-    version="0.0.1",
+    version="0.0.2",
     author="Bottersnike",
     author_email="bottersnike237@gmail.com",
     description="A minimal implementation of the While language",
