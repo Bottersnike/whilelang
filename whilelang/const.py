@@ -10,8 +10,8 @@ While directives list:
   @help: This help message
   @reset: Reset the interpreter
   @print [variable]: Output a single variable
-  @numeric [suite]: Calculate the Gobel number for a block of code
-  @from_numeric [mode] [expr]: Convert a Govel number back to code. mode should
+  @numeric [suite]: Calculate the Gödel number for a block of code
+  @from_numeric [mode] [expr]: Convert a Gödel number back to code. mode should
       be one of "a" for arithmetic expressions, "b" for boolean expressions, or
       "stmt" for a statement.
   @run_numeric [mode] [expr]: As with @from_numeric, except the resulting code

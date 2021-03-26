@@ -71,7 +71,7 @@ def main():
     )
     parser.add_argument(
         "-n", "--numeric", action="store_true",
-        help="Calculate the Gobel number rather than evaluating",
+        help="Calculate the Godel number rather than evaluating",
     )
     parser.add_argument(
         "arguments", nargs="*",
