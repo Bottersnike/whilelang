@@ -1,8 +1,10 @@
+import argparse
 import time
 import sys
 
 from .lexer import Lexer
 from .parser import Parser
+from .errors import WhileSyntaxError, WhileSystemExit, WhileError
 
 
 def run(code, initial=None):
@@ -10,18 +12,99 @@ def run(code, initial=None):
     if namespace is None:
         namespace = {}
 
-    parser = Parser(Lexer(code))
+    try:
+        parser = Parser(Lexer(code))
 
-    start = time.time_ns()
-    parser.suite().visit(namespace)
+        start = time.time_ns()
+        parser.suite().visit(namespace)
+    except WhileSyntaxError as e:
+        print(e)
+        return -1
+    except WhileSystemExit:
+        pass
     return time.time_ns() - start
 
 
+def repl(args):
+    print(
+        "While interpreter running on Python "
+        f"{sys.version_info.major}.{sys.version_info.minor}"
+    )
+    print("Type @help for basic help, and @reset to reset the repl")
+    namespace = {}
+    while True:
+        code = input(">>> ")
+        try:
+            ast = Parser(Lexer(code)).suite()
+
+            if args.numeric:
+                print(ast.numeric())
+            else:
+                if (ret := ast.visit(namespace)) is not None:
+                    print(ret)
+        except WhileSyntaxError as e:
+            print(e)
+        except WhileSystemExit:
+            break
+
+
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: while filename [...args]")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "source", default=None, nargs="?",
+        help="Source code, or path to source file",
+    )
+    parser.add_argument(
+        "-c", "--code", action="store_true",
+        help="Interpret source as source, not a filename",
+    )
+    parser.add_argument(
+        "-n", "--numeric", action="store_true",
+        help="Calculate the Gobel number rather than evaluating",
+    )
+    parser.add_argument(
+        "arguments", nargs="*",
+        help="Arguments to pass to the program",
+    )
+    args = parser.parse_args()
+
+    namespace = {}
+    for n, i in enumerate(args.arguments):
+        if i == "true":
+            i = True
+        elif i == "false":
+            i = False
+        elif i.isdigit():
+            i = int(i)
+        else:
+            print(f"Invalid argument '{i}'")
+            print("Only booleans and integers may be passed this way.")
+            return
+        namespace[f"_arg{n}"] = i
+
+    if not args.source:
+        repl(args)
         return
-    filename = sys.argv[1]
+
+    if not args.code:
+        try:
+            with open(args.source) as source_file:
+                source = source_file.read()
+        except FileNotFoundError:
+            print(f"while: {args.code}: No such file or directory")
+            return
+    else:
+        source = args.source
+
+    if args.numeric:
+        try:
+            num = Parser(Lexer(source)).suite().numeric()
+        except WhileError as e:
+            print(e)
+        else:
+            print(num)
+        return
+
     namespace = {}
     for n, i in enumerate(sys.argv[2:]):
         if i == "true":
@@ -35,10 +118,8 @@ def main():
             print("Only booleans and integers may be passed this way.")
             return
         namespace[f"_arg{n}"] = i
-    with open(filename) as code_file:
-        code = code_file.read()
 
-    duration_ns = run(code, namespace)
+    duration_ns = run(source, namespace)
     print(f"Completed in {duration_ns / 1000000}ms")
     for i in namespace:
         if i.startswith("_"):

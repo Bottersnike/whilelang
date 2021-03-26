@@ -3,7 +3,7 @@ from .const import DIRECTIVE, NUMBER, SYMBOL, NAME, KEYWORD, BOOLEAN, EOF, ANY
 from .nodes import (
     SuiteNode, SkipNode, IfNode, WhileNode, AssignNode, VariableNode, NotNode,
     ConstantNode, MulNode, SubNode, AddNode, CmpNode, EqNode, AndNode, OrNode,
-    TraceNode, ExitNode, PrintNode
+    TraceNode, ExitNode, PrintNode, HelpNode, ResetNode
 )
 
 
@@ -24,6 +24,15 @@ class Parser(BaseParser):
         return SuiteNode(statements)
 
     def statement(self):
+        if (
+            self._cur.type not in (KEYWORD, NAME, DIRECTIVE)
+            or (
+                self._cur.type == NAME
+                and not (self._next.type == SYMBOL and self._next.meta == ":=")
+            )
+        ):
+            return self.expr_a()
+
         token = self.eat_list({
             KEYWORD: ("skip", "if", "while", "trace"),
             NAME: ANY,
@@ -52,10 +61,14 @@ class Parser(BaseParser):
                 return TraceNode(token.location)
             elif token.meta == "exit":
                 return ExitNode()
+            elif token.meta == "help":
+                return HelpNode()
+            elif token.meta == "reset":
+                return ResetNode()
             elif token.meta == "print":
                 return PrintNode(self.eat(NAME).meta)
             else:
-                self._error(f"Unknown directive '{token.meta}'")
+                self._error(f"Unknown directive '{token.meta}'", token)
         elif token.type == NAME:
             name = token.meta
             self.eat(SYMBOL, ":=")
@@ -88,17 +101,17 @@ class Parser(BaseParser):
     def expr_f(self):
         lhs = self.factor()
         if self.try_eat(SYMBOL, "*"):
-            return MulNode(lhs, self.factor())
+            return MulNode(lhs, self.expr_a())
         if self.try_eat(SYMBOL, "/"):
-            return SubNode(lhs, self.factor())
+            return SubNode(lhs, self.expr_a())
         return lhs
 
     def expr_e(self):
         lhs = self.expr_f()
         if self.try_eat(SYMBOL, "+"):
-            return AddNode(lhs, self.expr_f())
+            return AddNode(lhs, self.expr_a())
         if self.try_eat(SYMBOL, "-"):
-            return SubNode(lhs, self.expr_f())
+            return SubNode(lhs, self.expr_a())
         return lhs
 
     def expr_d(self):
@@ -108,23 +121,23 @@ class Parser(BaseParser):
             and self._cur.meta in ("<=", "<", ">", ">=")
         ):
             sym = self.eat(SYMBOL)
-            return CmpNode(lhs, sym.meta, self.expr_e())
+            return CmpNode(lhs, sym.meta, self.expr_a())
         return lhs
 
     def expr_c(self):
         lhs = self.expr_d()
         if self.try_eat(SYMBOL, "="):
-            return EqNode(lhs, self.expr_d())
+            return EqNode(lhs, self.expr_a())
         return lhs
 
     def expr_b(self):
         lhs = self.expr_c()
         if self.try_eat(SYMBOL, "&"):
-            return AndNode(lhs, self.expr_c())
+            return AndNode(lhs, self.expr_a())
         return lhs
 
     def expr_a(self):
         lhs = self.expr_b()
         if self.try_eat(SYMBOL, "|"):
-            return OrNode(lhs, self.expr_b())
+            return OrNode(lhs, self.expr_a())
         return lhs

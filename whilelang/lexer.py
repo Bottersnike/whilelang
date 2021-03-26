@@ -2,6 +2,7 @@ import string
 
 from .token import Token
 from .const import DIRECTIVE, NUMBER, SYMBOL, NAME, KEYWORD, BOOLEAN, EOF
+from .errors import WhileSyntaxError
 
 
 class Lexer:
@@ -28,11 +29,11 @@ class Lexer:
         self._advance()
 
     def _error(self, message):
-        print(f"FATAL: Syntax error on line {self._position[0] + 1}")
-        print("  " + message)
-        print(self._text.split("\n")[self._position[0]])
-        print(" " * self._position[1] + "^")
-        quit()
+        error = f"FATAL: Syntax error on line {self._position[0] + 1}\n"
+        error += "  " + message + "\n"
+        error += self._text.split("\n")[self._position[0]] + "\n"
+        error += " " * self._position[1] + "^"
+        raise WhileSyntaxError(error)
 
     def _advance(self):
         y, x = self._position
@@ -82,7 +83,7 @@ class Lexer:
         while self._cur_char is not None and self._cur_char in self.NAME_BODY:
             name += self._cur_char
             self._advance()
-        return Token(DIRECTIVE, name, self._position, len(name))
+        return Token(DIRECTIVE, name, self._position, len(name) + 1)
 
     def _skip_line(self):
         while self._cur_char and self._cur_char != "\n":

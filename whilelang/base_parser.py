@@ -1,21 +1,28 @@
 from .const import ANY
+from .errors import WhileSyntaxError
 
 
 class BaseParser:
     def __init__(self, lexer):
         self._lex = lexer
         self._cur = next(lexer)
+        self._next = next(lexer)
 
-    def _error(self, message):
-        print(f"Syntax error at line {self._cur.location[0] + 1}")
-        print("  " + message)
-        print(self._lex._text.split("\n")[self._cur.location[0]])
-        if self._cur.length:
-            print(" " * (self._cur.location[1] - 1) + "^")
+    def _error(self, message, token=None):
+        if token is None:
+            token = self._cur
+
+        error = f"Syntax error at line {token.location[0] + 1}\n"
+        error += "  " + message + "\n"
+        error += self._lex._text.split("\n")[token.location[0]] + "\n"
+        if not token.length:
+            error += " " * (token.location[1] - 1) + "^"
         else:
-            print(" " * (self._cur.location[1] - self._cur.length)
-                  + "^" + "~" * (self._cur.length - 1))
-        quit()
+            error += (
+                " " * (token.location[1] - token.length - 1)
+                + "^" + "~" * (token.length - 1)
+            )
+        raise WhileSyntaxError(error)
 
     def eat(self, token=None, meta=None):
         if token is not None and self._cur.type != token:
@@ -29,7 +36,8 @@ class BaseParser:
                 f"at this time. Expected '{token} {meta}'."
             )
         last = self._cur
-        self._cur = next(self._lex)
+        self._cur = self._next
+        self._next = next(self._lex)
         return last
 
     def try_eat(self, token, meta=None):
@@ -50,6 +58,9 @@ class BaseParser:
         if matcher[self._cur.type] is ANY:
             return self.eat()
         if self._cur.meta not in matcher[self._cur.type]:
-            self._error()
+            self._error(
+                f"Unexpected '{self._cur.type} {self._cur.meta}' at this time."
+                f"Expected one of {matcher[self._cur.type]}"
+            )
 
         return self.eat()

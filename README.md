@@ -29,7 +29,3 @@ that can be found online, largely for ease of implementation.
 This logic can be seen implemented as code in `parser.py`. Compared to the
 simpler grammars often quoted, this grammar provides proper operator
 precedence.
-
-The `@exit` directive can be used to kill a program immediately without a final
-output. The current implementation means this will also kill any parent process
-that uses `whilelang.run`.

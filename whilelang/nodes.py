@@ -1,5 +1,8 @@
+from .const import HELP_MESSAGE
+from .errors import WhileError, WhileSystemExit
+
+
 def phi(n, m):
-    print("phi", n, m)
     return (2 ** n) * (2 * m + 1) - 1
 
 
@@ -24,7 +27,9 @@ class ASTNode:
         pass
 
     def numeric(self):
-        raise NotImplementedError
+        raise WhileError(
+            f"Node {self.__class__.__name__} does not implement numeric()"
+        )
 
 
 class SuiteNode(ASTNode):
@@ -32,8 +37,10 @@ class SuiteNode(ASTNode):
         self.statements = statements
 
     def visit(self, *args):
+        ret = 0
         for i in self.statements:
-            i.visit(*args)
+            ret = i.visit(*args)
+        return ret
 
     def numeric(self):
         if len(self.statements) == 0:
@@ -232,7 +239,7 @@ class TraceNode(ASTNode):
 
 class ExitNode(ASTNode):
     def visit(self, *args):
-        exit()
+        raise WhileSystemExit
 
 
 class PrintNode(ASTNode):
@@ -241,3 +248,13 @@ class PrintNode(ASTNode):
 
     def visit(self, namespace, *args):
         print(f"{self.name} := {namespace.get(self.name, 0)}")
+
+
+class ResetNode(ASTNode):
+    def visit(self, namespace, *args):
+        namespace.clear()
+
+
+class HelpNode(ASTNode):
+    def visit(self, *args):
+        print(HELP_MESSAGE)
